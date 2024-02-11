@@ -27,8 +27,8 @@ hr {
 .tile {
   position: relative;
   display: inline-block;
-  width: 90.4px;
-  height: 90.4px;
+  width: 90px;
+  height: 90px;
 
   border: 5px solid #b7dff2;
   font-size: 40px;
