@@ -115,6 +115,7 @@ function slideLeft() {
   for (let r = 0; r < rows; r++) {
     let row = board[r]; //[0,2,2,0] -> [4,0,0,0]
 
+    let originalRow = row.slice();
     row = slide(row);
 
     board[r] = row;
@@ -123,6 +124,13 @@ function slideLeft() {
       let tile = document.getElementById(r.toString() + "-" + c.toString());
       let num = board[r][c];
       updateTile(tile, num);
+
+      if (originalRow[c] !== num && num !== 0) {
+        tile.style.animation = "slide-from-right 0.3s";
+        setTimeout(() => {
+          tile.style.animation = "";
+        }, 300);
+      }
     }
   }
 }
@@ -132,7 +140,7 @@ function slideRight() {
 
   for (let r = 0; r < rows; r++) {
     let row = board[r]; //[0,2,2,0] -> [4,0,0,0]
-
+    let originalRow = row.slice();
     row.reverse();
     row = slide(row);
     row.reverse();
@@ -142,6 +150,13 @@ function slideRight() {
       let tile = document.getElementById(r.toString() + "-" + c.toString());
       let num = board[r][c];
       updateTile(tile, num);
+
+      if (originalRow[c] !== num && num !== 0) {
+        tile.style.animation = "slide-from-left 0.3s";
+        setTimeout(() => {
+          tile.style.animation = "";
+        }, 300);
+      }
     }
   }
 }
@@ -169,7 +184,16 @@ function slideUp() {
   for (let c = 0; c < columns; c++) {
     let row = [board[0][c], board[1][c], board[2][c], board[3][c]];
 
+    let originalRow = row.slice();
+
     row = slide(row);
+
+    let changedIndices = [];
+    for (let r = 0; r < rows; r++) {
+      if (originalRow[r] !== row[r]) {
+        changedIndices.push(r);
+      }
+    }
 
     for (let r = 0; r < rows; r++) {
       board[r][c] = row[r];
@@ -177,6 +201,13 @@ function slideUp() {
       let tile = document.getElementById(r.toString() + "-" + c.toString());
       let num = board[r][c];
       updateTile(tile, num);
+
+      if (changedIndices.includes(r) && num !== 0) {
+        tile.style.animation = "slide-from-bottom 0.3s";
+        setTimeout(() => {
+          tile.style.animation = "";
+        }, 300);
+      }
     }
   }
 }
@@ -185,15 +216,31 @@ function slideDown() {
 
   for (let c = 0; c < columns; c++) {
     let row = [board[0][c], board[1][c], board[2][c], board[3][c]];
+    let originalRow = row.slice();
     row.reverse();
     row = slide(row);
     row.reverse();
+    let changedIndices = [];
+
+    for (let r = 0; r < rows; r++) {
+      if (originalRow[r] !== row[r]) {
+        changedIndices.push(r);
+      }
+    }
+
     for (let r = 0; r < rows; r++) {
       board[r][c] = row[r];
 
       let tile = document.getElementById(r.toString() + "-" + c.toString());
       let num = board[r][c];
       updateTile(tile, num);
+
+      if (changedIndices.includes(r) && num !== 0) {
+        tile.style.animation = "slide-from-top 0.3s";
+        setTimeout(() => {
+          tile.style.animation = "";
+        }, 300);
+      }
     }
   }
 }
@@ -316,3 +363,66 @@ function restartGame() {
   score = 0;
   setTwo();
 }
+
+let startX = 0;
+let startY = 0;
+
+//this will listen to when we touch as screen and assigns the xcoordinates of the touch
+
+document.addEventListener("touchstart", (e) => {
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
+});
+
+//This will check for where you touch your sreen and prevents scrolling
+document.addEventListener(
+  "touchmove",
+  (e) => {
+    if (!e.target.className.includes("tile")) {
+      return;
+    }
+
+    e.preventDefault();
+  },
+  { passive: false }
+);
+
+document.addEventListener("touchend", (e) => {
+  if (!e.target.className.includes("tile")) {
+    return;
+  }
+
+  let diffX = startX - e.changedTouches[0].clientX;
+  let diffY = startY - e.changedTouches[0].clientY;
+
+  if (Math.abs(diffX) > Math.abs(diffY)) {
+    // Horizontal swipe
+    if (diffX > 0) {
+      slideLeft(); // Call a function for sliding left
+      setTwo(); // Call a function named "setTwo"
+    } else {
+      slideRight(); // Call a function for sliding right
+      setTwo(); // Call a function named "setTwo"
+    }
+  } else {
+    // Vertical swipe
+    if (diffY > 0) {
+      slideUp(); // Call a function for sliding up
+      setTwo(); // Call a function named "setTwo"
+    } else {
+      slideDown(); // Call a function for sliding down
+      setTwo(); // Call a function named "setTwo"
+    }
+  }
+  document.getElementById("score").innerText = score;
+  checkWin();
+
+  if (hasLost()) {
+    // Timeout
+    setTimeout(() => {
+      alert("Game Over! You have lost the game. Game will restart.");
+      restartGame();
+      alert("Click any arrow key to restart!");
+    }, 100);
+  }
+});
